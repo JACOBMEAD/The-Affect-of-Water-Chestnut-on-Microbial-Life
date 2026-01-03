@@ -24,10 +24,7 @@ class TrapaNatansSimulation {
     };
     
     this.microbes = [];
-    this.openaiApiKey = ''; // Will be fetched from backend
-    
-    // Fetch API key from backend
-    this.fetchApiKey();
+    this.openaiApiKey = this.loadApiKeyFromEnv();
     
     // Track current season and coverage to only regenerate when necessary
     this.currentSeason = null; // Will be set on first update
@@ -38,23 +35,33 @@ class TrapaNatansSimulation {
     this.padAnimationFrame = null; // For animation loop
     
     // Debouncing for AI text generation
-    this.aiTextGenerationDebounce = null;
-    this.activeSeedDrops = [];
+    this.aiTextDebounceTimer = null;
+    this.lastAiTextRequest = null;
     
     this.init();
   }
   
-  async fetchApiKey() {
-    try {
-      const response = await fetch('/api/config');
-      const config = await response.json();
-      this.openaiApiKey = config.openai_api_key;
-      console.log('API key fetched successfully from backend');
-    } catch (error) {
-      console.error('Failed to fetch API key from backend:', error);
-      // Fallback to empty string if fetch fails
-      this.openaiApiKey = '';
+  loadApiKeyFromEnv() {
+    // Try to load from environment variable first
+    if (typeof process !== 'undefined' && process.env && process.env.openai_api) {
+      return process.env.openai_api;
     }
+    
+    // Fallback for browser environment - try to get from .env file
+    fetch('.env')
+      .then(response => response.text())
+      .then(data => {
+        const match = data.match(/^openai_api=(.+)$/m);
+        if (match) {
+          this.openaiApiKey = match[1].trim();
+        }
+      })
+      .catch(() => {
+        console.warn('Could not load API key from .env file');
+      });
+    
+    // Return empty string initially, will be updated by fetch
+    return '';
   }
   
   init() {

@@ -1,6 +1,5 @@
-from flask import Flask, render_template_string, jsonify, request
+from flask import Flask, render_template_string, jsonify
 import json
-import os
 
 app = Flask(__name__)
 
@@ -452,13 +451,6 @@ def index():
 </body>
 </html>
 ''')
-
-@app.route('/api/config')
-def get_config():
-    """Serve configuration including API key from environment variables"""
-    return jsonify({
-        'openai_api_key': os.getenv('openai_api', '')
-    })
 
 @app.route('/api/calculate', methods=['POST'])
 def calculate():
